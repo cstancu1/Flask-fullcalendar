@@ -1,0 +1,5 @@
+V 1.2
+
+-posibilitate deblocare zile de catre utilizator
+-tabel pentru printare ajustat
+-adaugare nume medic pe bilet programare

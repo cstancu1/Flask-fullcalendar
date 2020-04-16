@@ -1,0 +1,106 @@
+{% include 'header.html' %}
+<div id="wrapper">
+{% block content %}
+<div id="content">
+<script>
+   document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+          plugins: [ 'dayGrid', 'interaction', 'timeGrid'],
+          header: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,basicDay'},
+            events: {
+              url: '{{ url_for('api.get_bookings_by_med', id = current_medic.id) }}',
+              method: 'GET',
+              color: 'green',   // an option!
+              textColor: 'white',
+            },
+        });
+
+        calendar.render();
+      });
+
+
+
+
+      </script>
+
+        <!-- Formular programare popup -->
+        <div class="programare">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <div class="row"><p > Adaugare programare, ora :</p><h5  id="data-programare">  </h5><p>,  pentru {{ current_medic.name }}</p></div>
+                    <span class="close-button">Anulare</span>
+                  </div>
+                  <div class="modal-body">
+                    <form>
+                      <div class="row">
+                        <div class="col">
+                        <div class="form-group">
+                            <label for="nume">Nume pacient</label>
+                            <input type="text" class="form-control" id="Nume pacient" placeholder="">
+                          </div>
+                        </div>
+                        </div>
+                        <div class="row">
+                          <div class="col">
+                            <div class="form-group">
+                                <label for="investigatie">Tip investigatie:</label>
+                                <select class="form-control" id="investigatie">
+                                  <option>Recoltare</option>
+                                  <option>Consultatie</option>
+                                  <option>Tratament</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="tel">Telefon</label>
+                                    <input type="text" class="form-control" id="tel" placeholder="">
+                                  </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="observatii">Observatii</label>
+                                    <input type="text" class="form-control" id="observatii" placeholder="">
+                                  </div>
+                            </div>
+                        </div>
+                    </form>
+                  </div>
+                </div>
+            </div>
+
+      <div id="calendar" style="width:80%; margin-left:auto; margin-right:auto;margin-top:50px;"></div>
+
+      <!--Script Modal programare-->
+      <script>
+        var modal = document.querySelector(".programare");
+        var trigger = document.querySelector(".trigger");
+        var closeButton = document.querySelector(".close-button");
+        closeButton.addEventListener("click", modalOff);
+        var closeButton = document.querySelector(".close-button");
+
+        function toggleModal(hourSlot) {
+          hourSlot = hourSlot.split(':')
+          hourSlot = hourSlot[0] + ':' + hourSlot[1]
+        $("#data-programare").text(hourSlot)
+        modal.classList.toggle("show-modal");
+        }
+        function modalOff(){
+          modal.classList.toggle("show-modal");
+        }
+        </script>
+
+</div>
+
+
+
+
+{% endblock %}
+    </div>

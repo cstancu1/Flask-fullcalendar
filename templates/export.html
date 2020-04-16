@@ -1,0 +1,50 @@
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="stylesheet" href="{{ url_for('static', filename = 'css/nav.css') }}">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.0.272/jspdf.debug.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+<meta charset='utf-8'>
+<style>
+
+</style>
+
+<div class="table-responsive" id="content" style="width:100%; padding:30">
+    <div style="margin-left:auto; margin-right:auto;text-align: center"><h3>Raport programari {{ date }}, pentru {{ med.name }}</h3></div>
+        <table class="table table-bordered" id="tabel">
+          <thead>
+            <tr>
+              <th>Ora</th>
+              <th>Nume</th>
+              <th>Telefon</th>
+              <th>Descriere</th>
+         
+              <th>Detalii</th>
+            </tr>
+          </thead>
+          <tbody>
+                {% for row in bookings %}
+            <tr>
+              <td>{{row['start'].split('T')[1].split('+')[0]}}-{{row['end'].split('T')[1].split('+')[0]}}</td>
+              <td>{{row['title']}}</td>
+              <td>{{row['phone']}}</td>
+              <td>{{row['description']}}</td>
+        
+              <td>{{row['details']}}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+
+        <script>
+                table = document.getElementById("tabel")
+                table.style.fontSize = '15px';
+                let doc = new jsPDF('p','pt','a4');
+                doc.setFontSize(25);
+                doc.addHTML(document.body,function() {
+                    doc.save('{{med.name}}-{{date}}.pdf');
+                });
+                </script>
