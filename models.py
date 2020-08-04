@@ -14,7 +14,7 @@ import json
     #client = gspread.authorize(creds)
     #row = [med_id, date, name, investigation, added_by, phone, 
     #        email, obs, start_time, end_time, all_day, cnp]
-    #sheet = client.open_by_key('11FOuZF0MwyVgoHFLlFKdWbhNOEvJa2VXF7vOiaDr9rA').sheet1
+    #sheet = client.open_by_key('').sheet1
     #sheet.insert_row(row)
 
 def login_required(f):
@@ -40,8 +40,8 @@ class Database:
     def __init__(self):
         host = 'localhost'
         user = 'dispensarizare'
-        password = '!@#Energie22'
-        db = 'dispensarizare'
+        password = ''
+        db = ''
 
         self.con = pymysql.connect(host = host, user = user, password = password, db = db,
                     cursorclass = pymysql.cursors.DictCursor)
