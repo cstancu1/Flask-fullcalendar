@@ -1,0 +1,222 @@
+{% include 'header.html' %}
+
+{% block content %}
+
+<script>
+        {% for medic in medics %}
+        medic{{ medic.id }} = {'id': '{{ medic.id }}',
+                                  'name': '{{medic.name}}',
+                                  'start' : '{{ medic.start }}',
+                                  'end' : '{{ medic.end }}'}
+        {% endfor %}
+        
+        function modalEdit(id){
+            currentMedic = 'medic'+ id 
+            valmedic = eval('currentMedic')
+            $('input[name=update-medic-id]').val(window[valmedic].id);
+            $('input[name=update-medic-name]').val(window[valmedic].name);
+            $('input[name=update-medic-start]').val(window[valmedic].start);
+            $('input[name=update-medic-end]').val(window[valmedic].end);
+            
+            $('#edit-medic-modal').modal('show'); 
+        }
+
+        function modalAdd(){
+          $('#add-medic-modal').modal('show');
+        }
+
+        function deletePrompt(id, name){
+          var del=confirm("Sunteti sigur ca doriti sa eliminati medicul " + name + " ? Aceasta modificare nu este reversibila!")
+          if(del==true){
+            window.location.href = "api/med-remove/"+ id;}
+        }
+
+        </script>
+
+<body>
+    {% if message %}
+    <div class="row col-md-12 col-md-offset-2 custyle">
+      <div class="alert alert-success">
+          <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <strong>Succes!</strong> {{ message }}
+      </div>
+    </div>
+    {% endif %}
+<div class="container " style="margin-top:20px;">
+  
+        <h5>Ultimele notite:</h5><br>
+        <div class="row col-md-12 col-md-offset-2 custyle">
+            
+            <div class="col-md-4 shadow bg-light">
+
+            </div>
+        </div>
+    <div class="row col-md-12 col-md-offset-2 custyle"  style="margin-top:40px;">
+        <div class="col-md-5 shadow bg-light" style="margin-right:7px;">
+    <table class="table table-striped custab">
+    <thead>
+    <a onclick="modalAdd()" class="btn btn-primary btn-xs pull-right"><b>+</b> Adaugare medic</a>
+        <tr>
+            <th>ID</th>
+            <th>Nume</th>
+
+            <th class="text-center"></th>
+        </tr>
+    </thead>
+    {% for medic in medics %}
+            <tr>
+                <td>{{ medic.id }}</td>
+                <td><a href="{{ url_for('calendar', id = medic.id) }}">{{ medic.name }}</a></td>
+                <td class="text-center"><a class='btn btn-info btn-xs' onclick="modalEdit({{medic.id}})" href="#"><span class="glyphicon glyphicon-edit"></span> Modificare</a> 
+                  <a onclick="deletePrompt({{ medic.id }}, '{{ medic.name }}')" class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-remove"></span> Eliminare</a></td>
+            </tr>
+    {% endfor %}
+    </table>
+    </div>
+    <div class="col-md-5 shadow bg-light" style="margin-left:7px;">
+      <h5>Blocare zile</h5>
+      <hr>
+      <form method="post" action="{{ url_for('api.block_days') }}">
+      <div class="form-group">
+          <label for="selectmedic">Selectati medic</label>
+          <select class="form-control" id="selectmedic" name="med_id">
+            {% for medic in medics %}
+            <option value="{{ medic.id }}">{{ medic.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="row col-md-12">
+        <div class="form-group col-md-6">
+          <label for="start">De la data de:</label>
+          <input class="form-control" type="date" name="start">
+        </div>
+        <div class="form-group col-md-6">
+            <label for="end">Pana la data de:</label>
+            <input class="form-control" type="date" name="end">
+          </div>
+        </div>
+        <button class="btn btn-success" type="submit">Blocare</button>
+      </form>
+    </div>
+</div>
+
+
+  <h5 style="margin-top:20px;">Descarca raport</h5>
+  <form method="post" action="{{ url_for('api.export') }}">
+      <div class="row col-md-12 col-md-offset-2 custyle"  style="margin-top:10px;">
+          <div class="form-group col-md-3">
+      <div class="form-group">
+          <label for="exportmedic">Selectati medic</label>
+          <select class="form-control" id="exportmedic" name="med_id">
+            {% for medic in medics %}
+            <option value="{{ medic.id }}">{{ medic.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+        <div class="form-group col-md-3">
+            <label for="start">Selectati data</label>
+            <input class="form-control" type="date" name="date">
+          </div>
+          <div class="form-group col-md-3">
+              <div class="form-group">
+                  <label for="exportmedic">Format</label>
+                  <select class="form-control" id="exportformat" name="format">
+
+                    <option value="PDF">PDF</option>
+                    
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-2">
+          <button type="submit" class="btn btn-success" style="margin-right:10px;margin-top:30px;">Descarcare</button>
+        </div>
+
+        </div>
+  </form>
+
+</div>
+
+
+<!-- MODAL EDITARE MEDIC -->
+<div class="modal fade" id="edit-medic-modal" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Editare medic <p id="edit-title"></p> </h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form action="{{ url_for('api.med_update') }}" method="POST">
+                  <h5>Denumire</h5>
+                  <input class="form-control" type="text" name="update-medic-name" value="">
+                  <input type="hidden" value="" id="update-medic-id" name="update-medic-id">
+                  <div class="row col-md-12" style="margin-top:25px;">
+                        <div class="col-md-4">
+                        <div style="margin-top:25px;">Disponibilitate:</div><br>
+                        </div>
+                      <div class="col-md-4">
+                          De la :
+                          <input class="form-control" type="text" name="update-medic-start" value="">
+                      </div>
+                      <div class="col-md-4">
+                            Pana la :
+                            <input class="form-control" type="text" name="update-medic-end" value="">
+                        </div>
+                  </div>
+             
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <button type="submit" class="btn btn-primary">Salveaza</button>
+            </div>
+        </form>
+          </div>
+        </div>
+      </div>
+    
+      <!-- MODAL ADAUGARE MEDIC -->
+<div class="modal fade" id="add-medic-modal" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Adaugare medic <p id="edit-title"></p> </h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form action="{{ url_for('api.med_add') }}" method="POST">
+              <h5>Denumire</h5>
+              <input class="form-control" type="text" name="update-medic-name" value="">
+              <input type="hidden" value="" id="update-medic-id" name="update-medic-id">
+              <div class="row col-md-12" style="margin-top:25px;">
+                    <div class="col-md-4">
+                    <div style="margin-top:25px;">Disponibilitate:</div><br>
+                    </div>
+                  <div class="col-md-4">
+                      De la :
+                      <input class="form-control" type="text" name="update-medic-start" value="">
+                  </div>
+                  <div class="col-md-4">
+                        Pana la :
+                        <input class="form-control" type="text" name="update-medic-end" value="">
+                    </div>
+              </div>
+         
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">Salveaza</button>
+        </div>
+    </form>
+      </div>
+    </div>
+  </div>
+    
+    </body>
+
+
+{% endblock %}

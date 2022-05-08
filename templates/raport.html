@@ -1,0 +1,293 @@
+<link rel="stylesheet" href="{{ url_for('static', filename = 'css/calendar.css') }}">
+
+{% include 'header.html' %}
+<div id="wrapper">
+{% block content %}
+<div class="row" style="margin-left:50px; margin-top:30px;">
+    <div class="col-sm" style="margin-left:30px;">
+            <label for="selectedDate">Selectati data pentru navigare:</label>
+   
+        <input id="selectedDate" type="date" class="form-control" style="width:200px;">
+    
+        <a onclick="jumpdate()" class="btn btn-primary" style="margin-top:10px;">Navigare</a>
+    </div>
+    <div class="col-sm">
+
+    </div>
+    </div>
+
+
+<div id="content">
+<script>
+  $.fn.serializeObject = function()
+{
+   var o = {};
+   var a = this.serializeArray();
+   $.each(a, function() {
+       if (o[this.name]) {
+           if (!o[this.name].push) {
+               o[this.name] = [o[this.name]];
+           }
+           o[this.name].push(this.value || '');
+       } else {
+           o[this.name] = this.value || '';
+       }
+   });
+   return o;
+};
+var calendar = null;
+var dataSet = null;
+</script>
+
+  <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+          var calendarEl = document.getElementById('calendar');
+
+            calendar = new FullCalendar.Calendar(calendarEl, {
+            locale: 'ro',
+           
+            plugins: [ 'dayGrid', 'interaction', 'list'],
+            buttonText: {
+            today: 'Astazi',
+            month: 'Lunar',
+            day: 'Zilnic',
+            week: 'Saptamanal'
+            },
+            themeSystem: 'bootstrap',
+            dateClick: function(dateSquare) {
+              if(dateSquare.allDay == true){
+                calendar.changeView('listDay', dateSquare.dateStr);
+              }
+              else{
+                timeStr = dateSquare.dateStr;
+                timeStr = timeStr.split('T');
+                timeStr = timeStr[1].split('+');
+                toggleModal(timeStr[0], dateSquare);
+              }
+            },
+            defaultView: 'listDay',
+            header: {
+                left: 'prev,next today',
+                right: 'title, addEventButton',
+                },
+            minTime: '{{ current_medic.start }}',
+            maxTime: '{{ current_medic.end }}',
+            events: {
+              url: '{{ url_for('api.get_bookings_by_med', id = current_medic.id) }}',
+              responseType: 'JSON',
+              method: 'GET',
+              color: 'green',   // an option!
+              textColor: 'white',
+              error: function () {
+                alert('Eroare la citirea bazei de date!');
+                },
+            },
+            slotLabelInterval: '00:15:00',
+            slotDuration: '00:15:00',
+            displayEventEnd: true,
+            allDaySlot: false,
+            navLinks: true,
+            loading: function( isLoading, view ) {
+              if(isLoading) {// isLoading gives boolean value
+                  $('#wait').show();
+              } else {
+                  $('#wait').hide();
+              }
+                 },
+            navLinkDayClick: function(date, jsEvent){
+              calendar.changeView('listDay', date);
+            },
+            eventClick: function(info) {
+              var modal = document.getElementById("details-modal");
+              document.getElementById("modal-title").innerHTML=info.event.title
+              document.getElementById("modal-start").innerHTML=" " + moment(info.event.start).format('hh:mm')
+              document.getElementById("modal-end").innerHTML=" " + moment(info.event.end).format('hh:mm')
+              document.getElementById("investigation").innerHTML=info.event.extendedProps.description
+              document.getElementById("details-phone").innerHTML=info.event.extendedProps.phone
+              document.getElementById("details-obs").innerHTML=info.event.extendedProps.details
+              document.getElementById("details-cnp").innerHTML=info.event.extendedProps.cnp
+              dataSet = info.event;
+              modal.style.display = "block";
+              var span = document.getElementsByClassName("close")[0];
+              span.onclick = function() {
+              modal.style.display = "none";
+              }
+
+            // change the border color just for fun
+            info.el.style.borderColor = 'red';
+            info.el.style.backgroundColor = 'lightgray'
+            info.jsEvent.preventDefault();
+
+          },
+            eventMouseLeave: function(info){
+              info.el.style.backgroundColor = 'white'
+              info.el.style.textColor = 'black'
+            },
+            eventMouseEnter: function(info){
+              info.el.style.backgroundColor = 'green'
+              info.el.style.borderColor='green'
+              info.el.style.textColor='white'
+            },
+            businessHours: {
+            // days of week. an array of zero-based day of week integers (0=Sunday)
+            daysOfWeek: [ 1, 2, 3, 4, 5], // Monday - Thursday
+
+            startTime: '08:00', // a start time (10am in this example)
+            endTime: '14:00', // an end time (6pm in this example)
+}
+          });
+
+          calendar.render();
+
+            $("table.fc-agenda-slots th").each(function () {
+    $(this).width(50);
+});
+
+
+
+        });
+
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+
+
+
+function PrintElem(elem)
+{
+    var mywindow = window.open('', 'PRINT', 'height=400,width=600');
+
+    mywindow.document.write(document.getElementById(elem).innerHTML);
+
+
+    mywindow.document.close(); // necessary for IE >= 10
+    mywindow.focus(); // necessary for IE >= 10*/
+
+    mywindow.print();
+    mywindow.close();
+
+    return true;
+}
+
+
+      </script>
+<body>
+        
+      <div id="calendar" style="width:80%; margin-left:auto; margin-right:auto;margin-top:50px;"></div>
+
+
+      <div id="details-modal" class="modal">
+
+        <!-- Modal content -->
+        <div class="modal-content" id="details-pop">
+          <span class="close">&times;</span>
+          <ul class="divider">
+          <p style="font-size:16px;" id="modal-title"></p><hr />
+          <p>De la: <b id="modal-start"></b>  pana la: <b id="modal-end"></b>, pentru <b id="investigation"></b></p>
+          <p>Telefon: <b id="details-phone"></b></p>
+          <p>Observatii: <b id="details-obs"></b></p>
+          <p>CNP: <b id="details-cnp"></b></p>
+        </ul>
+        <a onclick="printCopy(dataSet)" class="btn btn-info">Bilet programare</a>
+        </div>
+        </div>
+        
+
+
+        <div id='calendar'></div>
+        
+      </div>
+
+
+ <!-- PRINTER -->
+ <div id="print-ticket" style="display:none;">
+    <h3>Bilet programare (sectia dispensarizare hepatite)</h3>
+    
+    <ul class="divider">
+        <h3 id="print-name" ></h3>
+    <p>Data: <b id="print-date"></b></p>
+    <p>Pentru <b id="print-investigation"></b></p>
+    <p>Ora: <h4 id="print-hour"></h4></p>
+    </ul>
+    <ul class="divider">
+    <p>Spitalul Clinic de Boli Infectioase<br>
+    si Tropicale "Dr. Victor Babes</p>
+    <p>Sos. Mihai Bravu nr. 281 <br> sector 3, Bucuresti</p>
+    <p>Telefon: 021 317.27.27</p>
+    </ul>
+  </div>
+
+      <!--Script Modal programare-->
+      <script>
+        var modal = document.querySelector(".programare");
+        var trigger = document.querySelector(".trigger");
+        var closeButton = document.querySelector(".close-button");
+        var closeButton = document.querySelector(".close-button");
+
+        function toggleModal(hourSlot, dateSquare) {
+          hourSlot = hourSlot.split(':')
+          hourSlot = hourSlot[0] + ':' + hourSlot[1]
+        $("#start-date-hidden").attr('value', dateSquare.dateStr)
+        $("#data-programare").text(hourSlot)
+        modal.classList.toggle("show-modal")
+        }
+        function modalOff(){
+          modal.classList.toggle("show-modal");
+        }
+        function successForm(){
+          alert('Succes!');
+          $('#programare-form').resetForm();
+        }
+        $('#programare-form').submit(function(e) { 
+          var formData = $('#programare-form').serializeObject();
+          e.preventDefault();
+          $.ajax({
+                type: "POST",
+                url: "{{ url_for('api.post_add_event') }}",
+                data: JSON.stringify(formData),
+                success: function(){modalOff();
+                                    alert('Programare adaugata cu succes!');
+                                    calendar.addEvent( {title: formData.name,
+                                                        start: formData.start,
+                                                        end: moment(formData.start).add(formData.duration, "m").format("YYYY-MM-DDTHH:mm:ss"),
+                                                        color: 'green',
+                                                        textColor: 'white'} );
+                                    document.getElementById("programare-form").reset(); 
+                                    document.getElementById("print-name").innerHTML=formData.title;
+                                    document.getElementById("print-date").innerHTML=moment(formData.start).format("DD-MM-YYYY");
+                                    document.getElementById("print-hour").innerHTML=moment(formData.start).format("HH:mm");
+                                    document.getElementById("print-investigation").innerHTML=formData.investigation;
+                                    PrintElem('print-ticket');
+                                    return false;},
+                dataType: "json",
+                contentType : "application/json"
+              });
+          
+          
+        });
+
+
+        function jumpdate(){
+            var dateToNav = document.getElementById("selectedDate").value
+            calendar.changeView('listDay', dateToNav);
+        }
+
+        function printCopy(formData){
+            document.getElementById("print-name").innerHTML=formData.title;
+            document.getElementById("print-date").innerHTML=moment(formData.start).format("DD-MM-YYYY");
+            document.getElementById("print-hour").innerHTML=moment(formData.start).format("HH:mm");
+            document.getElementById("print-investigation").innerHTML=formData.extendedProps.description;
+            PrintElem('print-ticket');
+        }
+        </script>
+
+</div>
+
+
+</body>
+
+{% endblock %}
+    </div>

@@ -1,0 +1,44 @@
+{% include 'header.html' %}
+
+<script>
+    medics = [
+    {% for medic in medics %}
+    {'id' : "{{medic.id}}",
+    'name' : "{{medic.name}}"}
+    {% endfor %}
+    ]
+</script>
+
+{% block content %}
+
+<table class="table table-bordered" id="tabel">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nume</th>
+            <th>Telefon</th>
+
+            <th>Descriere</th>
+            <th>CNP</th>
+            <th>Detalii</th>
+          </tr>
+        </thead>
+        <tbody>
+              {% for result in results %}
+          <tr>
+            <td>{{result['id']}}</td>
+            <td>{{result['title']}}</td>
+            <td>{{result['phone']}}</td>
+
+            <td>{{result['description']}}</td>
+            <td>{{result['cnp']}}</td>
+            <td>{{result['details']}}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+
+
+
+{% endblock %}

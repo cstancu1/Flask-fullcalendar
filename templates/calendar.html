@@ -1,0 +1,457 @@
+<link rel="stylesheet" href="{{ url_for('static', filename = 'css/calendar.css') }}">
+
+{% include 'header.html' %}
+<div id="wrapper">
+{% block content %}
+<div id="content">
+<script>
+  $.fn.serializeObject = function()
+{
+   var o = {};
+   var a = this.serializeArray();
+   $.each(a, function() {
+       if (o[this.name]) {
+           if (!o[this.name].push) {
+               o[this.name] = [o[this.name]];
+           }
+           o[this.name].push(this.value || '');
+       } else {
+           o[this.name] = this.value || '';
+       }
+   });
+   return o;
+};
+var calendar = null;
+var dataSet = null;
+</script>
+
+  <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+          var calendarEl = document.getElementById('calendar');
+
+            calendar = new FullCalendar.Calendar(calendarEl, {
+            locale: 'ro',
+           
+            plugins: [ 'dayGrid', 'interaction', 'timeGrid'],
+            buttonText: {
+            today: 'Astazi',
+            month: 'Lunar',
+            day: 'Zilnic',
+            week: 'Saptamanal'
+            },
+            themeSystem: 'bootstrap',
+            dateClick: function(dateSquare) {
+              if(dateSquare.allDay == true){
+                calendar.changeView('timeGridDay', dateSquare.dateStr);
+              }
+              else{
+                timeStr = dateSquare.dateStr;
+                timeStr = timeStr.split('T');
+                timeStr = timeStr[1].split('+');
+                toggleModal(timeStr[0], dateSquare);
+              }
+            },
+            //defaultView: 'dayGridWeek',
+            header: {
+                left: 'prev,next today',
+                center: 'title, addEventButton',
+                right: 'dayGridMonth,timeGridWeek,basicDay'},
+            minTime: '{{ current_medic.start }}',
+            maxTime: '{{ current_medic.end }}',
+            events: {
+              url: '{{ url_for('api.get_bookings_by_med', id = current_medic.id) }}',
+              responseType: 'JSON',
+              method: 'GET',
+              color: 'green',   // an option!
+              textColor: 'white',
+              error: function () {
+                alert('Eroare la citirea bazei de date!');
+                },
+            },
+            slotLabelInterval: '00:15:00',
+            slotDuration: '00:15:00',
+            displayEventEnd: true,
+            allDaySlot: false,
+            navLinks: true,
+            loading: function( isLoading, view ) {
+              if(isLoading) {// isLoading gives boolean value
+                loadingScreen = document.getElementById("loading-modal")
+                loadingScreen.style.display = "block"
+              } else {
+                loadingScreen = document.getElementById("loading-modal")
+                loadingScreen.style.display = "none"
+              }
+                 },
+            navLinkDayClick: function(allDay, date, jsEvent){
+              console.log(allDay)
+              if(allDay==true){
+                  alert('Zi blocata!');
+                  
+                } else {
+                  calendar.changeView('timeGridDay', date);
+                }
+             
+            },
+            eventClick: function(info, view) {
+              if(info.event.allDay == true){
+                alert('Zi blocata!');
+                console.log(info.view.type)
+                if(confirm("Deblocati perioada?")){
+                  $.ajax({
+                    type: "POST",
+                    url: "/api/unlock_days/"+ info.event.id,
+                    success: alert('Perioada deblocata!'),
+                  });
+                  eventR = calendar.getEventById(info.event.id)
+                  eventR.remove()
+                  alert("Perioada deblocata cu succes!")
+                }
+                calendar.changeView('dayGridMonth')
+                return;
+              }
+              else{
+                var modal = document.getElementById("details-modal");
+              document.getElementById("modal-title").innerHTML=info.event.title
+              document.getElementById("modal-start").innerHTML=" " + moment(info.event.start).format('hh:mm')
+              document.getElementById("modal-end").innerHTML=" " + moment(info.event.end).format('hh:mm')
+              document.getElementById("investigation").innerHTML=info.event.extendedProps.description
+              document.getElementById("details-phone").innerHTML=info.event.extendedProps.phone
+              document.getElementById("details-obs").innerHTML=info.event.extendedProps.details
+              document.getElementById("details-cnp").innerHTML=info.event.extendedProps.cnp
+              dataSet = info.event;
+              modal.style.display = "block";
+              var span = document.getElementsByClassName("close")[0];
+              span.onclick = function() {
+              modal.style.display = "none";
+              }
+
+              }
+
+            // change the border color just for fun
+            info.el.style.borderColor = 'red';
+            info.el.style.backgroundColor = 'lightgray'
+            info.jsEvent.preventDefault();
+
+          },
+            eventMouseEnter: function(info){
+              if(info.event.allDay == false){
+                info.el.style.backgroundColor = 'red'
+              info.el.style.textColor = 'white'
+              }
+            },
+
+            eventDataTransform: function(event)
+              {
+                if (event.allDay == true) {event.rendering = "background";
+                                          event.color = "red";
+                                          };
+                return event;
+              },
+
+            eventMouseLeave: function(info){
+              if(info.event.allDay==false){
+                info.el.style.backgroundColor = 'green'
+              info.el.style.borderColor='green'
+              info.el.style.textColor='white'
+              }
+              
+            },
+            businessHours: {
+            // days of week. an array of zero-based day of week integers (0=Sunday)
+            daysOfWeek: [ 1, 2, 3, 4, 5], // Monday - Thursday
+
+            startTime: '08:00', // a start time (10am in this example)
+            endTime: '14:00', // an end time (6pm in this example)
+}
+          });
+
+          calendar.render();
+    $("table.fc-agenda-slots th").each(function () {
+    $(this).width(50);
+    $('#calendar').fullCalendar({
+
+});
+});
+
+
+
+        });
+
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+
+
+
+function PrintElem(elem)
+{
+    var mywindow = window.open('', 'PRINT', 'height=400,width=600');
+
+    mywindow.document.write(document.getElementById(elem).innerHTML);
+
+
+    mywindow.document.close(); // necessary for IE >= 10
+    mywindow.focus(); // necessary for IE >= 10*/
+
+    mywindow.print();
+    mywindow.close();
+
+    return true;
+}
+
+
+      </script>
+<body>
+
+  </div>
+
+  <div class="" id="loading-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5>Se incarca programarile</h5>
+      </div>
+      <div class="spinner">
+          <div class="bounce1"></div>
+          <div class="bounce2"></div>
+          <div class="bounce3"></div>
+        </div>
+    </div>
+
+
+  </div>
+
+        <!-- Formular programare popup -->
+        <div class="programare">
+                <div class="modal-content" id="modal-programari">
+                    <div class="modal-header">
+                    <div class="row"><p > Adaugare programare ora :   <h5  id="data-programare">  </h5></p> <p> pentru {{ current_medic.name }}</p></div>
+                  </div>
+                  <div id="loading">
+                  <h4 style="color:green">Se adauga programarea</h4><br>
+                  <h5>Va rugam asteptati...</h5>
+                  <div class="spinner">
+                      <div class="bounce1"></div>
+                      <div class="bounce2"></div>
+                      <div class="bounce3"></div>
+                    </div>
+                  </div>
+                  <div class="modal-body">
+                    <form id="programare-form">
+                      <input type="hidden" name="med-id" value="{{ current_medic.id }}" id="med-id-hidden">
+                      <input type="hidden" value="" id="start-date-hidden" name="start">
+                      <input type="hidden" value="{{ current_user.user_id }}" id="added-hidden" name="added_by">
+                      <input type="hidden" value="no_email" id="email-hidden" name="email">
+                      <input type="hidden" value="0" id="all-day-hidden" name="all_day">
+                      
+                      <div class="row">
+                        <div class="col">
+                        <div class="form-group">
+                            <label for="nume">Nume pacient</label>
+                            <input style="text-transform:uppercase" type="text" name="name" autocomplete="off" class="form-control" id="Nume pacient" placeholder="" required>
+                          </div>
+                        </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                              <div class="form-group">
+                                  <label for="durata">CNP</label>
+                                  <input type="number" name="cnp" autocomplete="off" class="form-control" id="cnp" placeholder="">
+                                </div>
+                              </div>
+                          </div>
+                        <div class="row">
+                          <div class="col">
+                            <div class="form-group">
+                                <label for="investigatie">Tip investigatie:</label>
+                                <select class="form-control" autocomplete="off" name="investigation" id="investigatie">
+                                  <option>Recoltare</option>
+                                  <option>Consultatie</option>
+                                  <option>Tratament</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="tel">Telefon</label>
+                                    <input type="text" name="phone" autocomplete="off" class="form-control" id="tel" placeholder="" required>
+                                  </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="observatii">Observatii</label>
+                                    <input style="text-transform:uppercase" type="text" name="obs" class="form-control" autocomplete="off" id="observatii" placeholder="">
+                                  </div>
+                            </div>
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="durata">Durata (minute)</label>
+                                    <input type="number" name="duration" value="15" class="form-control" id="durata" placeholder="">
+                                  </div>
+                            </div>
+                            
+                        </div>
+                        <div class="row">
+                          <div class="col">
+                        <button class=" btn btn-success" type="submit" value="submit" id="modal-post-booking">Adaugare</button>
+                      </div>
+                      <div class="col">
+                          <span class="close-button">Anulare</span>
+                        </div>
+                      </div>
+                      </form>
+                    
+                  </div>
+                </div>
+            </div>
+
+      <div id="calendar" style="width:80%; margin-left:auto; margin-right:auto;margin-top:50px;"></div>
+
+
+      <div id="details-modal" class="modal">
+
+        <!-- Modal content -->
+        <div class="modal-content" id="details-pop">
+          <span class="close">&times;</span>
+          <ul class="divider">
+          <p style="font-size:16px;" id="modal-title"></p><hr />
+          <p>De la: <b id="modal-start"></b>  pana la: <b id="modal-end"></b>, pentru <b id="investigation"></b></p>
+          <p>Telefon: <b id="details-phone"></b></p>
+          <p>Observatii: <b id="details-obs"></b></p>
+          <p>CNP: <b id="details-cnp"></b></p>
+        </ul>
+        <a onclick="printCopy(dataSet)" class="btn btn-info">Bilet programare</a>
+        <a onclick="removeBooking(dataSet)" class="btn btn-danger" style="color:white;">Anulare programare</a>
+        </div>
+
+        <div class="loader-inner line-scale-pulse-out" id="wait">
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+        
+        <div id='calendar'></div>
+        
+      </div>
+
+
+ <!-- PRINTER -->
+ <div id="print-ticket" style="display:none;">
+    <h3>Bilet programare (sectia dispensarizare hepatite)</h3>
+    
+    <ul class="divider">
+        <h4 id="print-name" ></h4>
+    <p>Medic: <b id="print-medic">{{ current_medic.name }}</b> Data: <b id="print-date"></b></p>
+    <p>Pentru <b id="print-investigation"></b> Ora: <b id="print-hour"></b></p>
+    </ul>
+    <ul class="divider">
+    <p>Spitalul Clinic de Boli Infectioase<br>
+    si Tropicale "Dr. Victor Babes</p>
+    <p>Sos. Mihai Bravu nr. 281 <br> sector 3, Bucuresti</p>
+    <p>Telefon: 021 317.27.27</p>
+    </ul>
+  </div>
+
+      <!--Script Modal programare-->
+      <script>
+        var modal = document.querySelector(".programare");
+        var trigger = document.querySelector(".trigger");
+        var closeButton = document.querySelector(".close-button");
+        closeButton.addEventListener("click", modalOff);
+        var closeButton = document.querySelector(".close-button");
+
+        function toggleModal(hourSlot, dateSquare) {
+          hourSlot = hourSlot.split(':')
+          hourSlot = hourSlot[0] + ':' + hourSlot[1]
+        $("#start-date-hidden").attr('value', dateSquare.dateStr)
+        $("#data-programare").text(hourSlot)
+        console.log(dateSquare)
+        if(dateSquare.allDay == false){
+          modal.classList.toggle("show-modal")
+        }
+       
+        }
+        function modalOff(){
+          modal.classList.toggle("show-modal");
+          loading = document.getElementById("loading")
+          loading.style.display = "none"
+          formDiv = document.getElementById("programare-form")
+          formDiv.style.display = "block"
+        }
+        function successForm(){
+          alert('Succes!');
+          $('#programare-form').resetForm();
+        }
+        $('#programare-form').submit(function(e) { 
+          var formData = $('#programare-form').serializeObject();
+          e.preventDefault();
+          loading = document.getElementById("loading")
+          loading.style.display = "block"
+          formDiv = document.getElementById("programare-form")
+          formDiv.style.display = "none"
+          $.ajax({
+                type: "POST",
+                url: "{{ url_for('api.post_add_event') }}",
+                data: JSON.stringify(formData),
+                success: function(){modalOff();
+                                    alert('Programare adaugata cu succes!');
+                                    calendar.addEvent( {title: formData.name,
+                                                        start: formData.start,
+                                                        end: moment(formData.start).add(formData.duration, "m").format("YYYY-MM-DDTHH:mm:ss"),
+                                                        phone: formData.phone,
+                                                        description : formData.investigation,
+                                                        details : formData.obs,
+                                                        cnp : formData.cnp,
+                                                        color: 'green',
+                                                        textColor: 'white'} );
+                                    
+                                    document.getElementById("programare-form").reset(); 
+                                    document.getElementById("print-name").innerHTML=formData.name;
+                                    document.getElementById("print-date").innerHTML=moment(formData.start).format("DD-MM-YYYY");
+                                    document.getElementById("print-hour").innerHTML=moment(formData.start).format("HH:mm");
+                            
+                                    document.getElementById("print-investigation").innerHTML=formData.investigation;
+                                    PrintElem('print-ticket');
+                                    return false;},
+                dataType: "json",
+                contentType : "application/json"
+              });
+          
+          
+        });
+
+        function removeBooking(formData){
+          var prmpt = confirm('Doriti sa eliminati aceasta programare? Operatiunea NU este reversibila!')
+          if(prmpt==true){
+            $.ajax({
+            type: "POST",
+            url: "/api/remove/"+formData.id
+          });
+          eventR = calendar.getEventById(formData.id)
+          eventR.remove()
+          }
+          
+        }
+
+        function printCopy(formData){
+            document.getElementById("print-name").innerHTML=formData.title;
+            document.getElementById("print-date").innerHTML=moment(formData.start).format("DD-MM-YYYY");
+            document.getElementById("print-hour").innerHTML=moment(formData.start).format("HH:mm");
+            document.getElementById("print-investigation").innerHTML=formData.extendedProps.description;
+            PrintElem('print-ticket');
+        }
+        </script>
+
+</div>
+
+
+</body>
+
+{% endblock %}
+    </div>
